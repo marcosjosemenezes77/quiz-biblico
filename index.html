@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Bíblico — Evangelho do Reino em um Minuto</title>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink:      #E91E8C;
+      --pink-dark: #b5146d;
+      --pink-glow: rgba(233, 30, 140, 0.35);
+      --black:     #000000;
+      --card:      #111111;
+      --card2:     #1a1a1a;
+      --border:    #2a2a2a;
+      --border-hi: #444444;
+      --white:     #ffffff;
+      --gray:      #aaaaaa;
+      --gray2:     #666666;
+      --correct:   #22c55e;
+      --wrong:     #ef4444;
+      --correct-bg: rgba(34,197,94,0.10);
+      --wrong-bg:   rgba(239,68,68,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    /* ─── Glow blob background ─── */
+    .bg-glow {
+      position: fixed; top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(233,30,140,0.12) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ─── Layout wrapper ─── */
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 680px;
+      padding: 0 20px 60px;
+    }
+
+    /* ─── Screen toggle ─── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ══════════════════════════════
+       HEADER  (visible on quiz + result)
+    ══════════════════════════════ */
+    .site-header {
+      display: flex; align-items: center;
+      gap: 14px; padding: 28px 0 0;
+      margin-bottom: 28px;
+    }
+    .site-header img {
+      width: 48px; height: 48px;
+      border-radius: 50%; border: 2px solid var(--pink);
+      flex-shrink: 0;
+    }
+    .site-header .brand h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.35rem; letter-spacing: 0.08em;
+      line-height: 1; color: var(--white);
+    }
+    .site-header .brand h1 span { color: var(--pink); }
+    .site-header .brand p {
+      font-size: 0.72rem; color: var(--gray2);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px;
+    }
+
+    /* ══════════════════════════════
+       WELCOME SCREEN
+    ══════════════════════════════ */
+    #screen-welcome {
+      padding-top: 0;
+    }
+    .welcome-header {
+      text-align: center;
+      padding: 48px 0 36px;
+    }
+    .welcome-header img {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      border: 3px solid var(--pink);
+      box-shadow: 0 0 30px var(--pink-glow);
+      margin-bottom: 20px;
+    }
+    .channel-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 6vw, 3rem);
+      letter-spacing: 0.06em;
+      line-height: 0.95;
+    }
+    .channel-name .bar { color: var(--pink); padding: 0 6px; }
+    .channel-sub {
+      font-size: 0.78rem; color: var(--gray2);
+      letter-spacing: 0.15em; text-transform: uppercase;
+      margin-top: 10px;
+    }
+    .pink-line {
+      width: 48px; height: 3px;
+      background: var(--pink);
+      margin: 20px auto;
+      border-radius: 2px;
+    }
+    .welcome-desc {
+      font-size: 0.95rem; color: var(--gray);
+      line-height: 1.7; text-align: center;
+      max-width: 480px; margin: 0 auto 32px;
+    }
+    .badge-row {
+      display: flex; gap: 12px; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 36px;
+    }
+    .badge {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 50px; padding: 7px 16px;
+      font-size: 0.78rem; color: var(--gray); font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .badge svg { flex-shrink: 0; }
+    .btn-primary {
+      display: block; width: 100%;
+      padding: 16px;
+      background: var(--pink);
+      border: none; border-radius: 6px;
+      color: var(--white);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem; letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 24px var(--pink-glow);
+    }
+    .btn-primary:hover {
+      background: var(--pink-dark);
+      box-shadow: 0 6px 32px var(--pink-glow);
+      transform: translateY(-1px);
+    }
+
+    /* ══════════════════════════════
+       SUBSCRIPTION SCREEN
+    ══════════════════════════════ */
+    .sub-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 32px;
+      margin-top: 8px;
+    }
+    .sub-card h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem; letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .sub-card h2 span { color: var(--pink); }
+    .sub-card .sub-desc {
+      font-size: 0.85rem; color: var(--gray);
+      line-height: 1.65; margin-bottom: 28px;
+    }
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+    .step-num {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: 50%; border: 2px solid var(--pink);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+      color: var(--pink);
+    }
+    .step-body { flex: 1; }
+    .step-title {
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--white); margin-bottom: 4px;
+    }
+    .step-detail {
+      font-size: 0.8rem; color: var(--gray); line-height: 1.5;
+    }
+    .step-detail .yt-btn {
+      display: inline-block; margin-top: 10px;
+      background: var(--wrong); color: #fff;
+      font-size: 0.78rem; font-weight: 700;
+      padding: 6px 14px; border-radius: 4px;
+      text-decoration: none; letter-spacing: 0.04em;
+    }
+    .step-detail .bell-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 4px; padding: 5px 10px;
+      font-size: 0.8rem; color: var(--white); margin-top: 8px;
+    }
+    /* Disabled state for start button */
+    .btn-primary:disabled {
+      opacity: 0.35; cursor: not-allowed;
+      transform: none !important; box-shadow: none !important;
+    }
+
+    /* ── Verification states ── */
+    .verify-area { margin-top: 8px; }
+
+    /* Google sign-in button */
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px 20px;
+      background: #fff; border: none; border-radius: 6px;
+      color: #3c4043; font-family: 'Montserrat', sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: box-shadow 0.2s, transform 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .btn-google:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.5); transform: translateY(-1px); }
+    .btn-google svg { flex-shrink: 0; }
+
+    /* Status card */
+    .status-card {
+      display: none; border-radius: 10px; padding: 20px;
+      margin-top: 14px; text-align: center;
+    }
+    .status-card.show { display: block; animation: fade-up 0.3s ease; }
+    .status-card.loading {
+      background: var(--card2); border: 1px solid var(--border);
+    }
+    .status-card.subscribed {
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3);
+    }
+    .status-card.not-subscribed {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+    }
+    .status-card.error {
+      background: rgba(255,170,0,0.08); border: 1px solid rgba(255,170,0,0.3);
+    }
+    .status-icon { font-size: 2rem; margin-bottom: 8px; }
+    .status-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem; letter-spacing: 0.06em; margin-bottom: 6px;
+    }
+    .status-card.subscribed  .status-title { color: #4ade80; }
+    .status-card.not-subscribed .status-title { color: #f87171; }
+    .status-card.error .status-title { color: #fbbf24; }
+    .status-sub { font-size: 0.82rem; color: var(--gray); line-height: 1.5; }
+
+    /* Spinner */
+    .spinner {
+      width: 32px; height: 32px; margin: 0 auto 10px;
+      border: 3px solid var(--border);
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Channel link button */
+    .btn-subscribe-yt {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 14px; padding: 10px 20px;
+      background: #ff0000; border: none; border-radius: 5px;
+      color: #fff; font-family: 'Montserrat', sans-serif;
+      font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-subscribe-yt:hover { background: #cc0000; }
+    .btn-retry {
+      display: inline-block; margin-top: 10px; margin-left: 8px;
+      padding: 10px 20px;
+      background: transparent; border: 1px solid var(--border-hi);
+      border-radius: 5px; color: var(--gray);
+      font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-retry:hover { border-color: var(--pink); color: var(--white); }
+
+    /* no-client-id warning */
+    .config-warn {
+      background: rgba(255,170,0,0.08); border: 1px solid rgba(255,170,0,0.3);
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+      font-size: 0.8rem; color: #fbbf24; line-height: 1.6; display: none;
+    }
+    .config-warn.show { display: block; }
+    .config-warn code {
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 3px;
+      font-size: 0.78rem;
+    }
+
+    /* ══════════════════════════════
+       PROGRESS BAR
+    ══════════════════════════════ */
+    .progress-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.08em; color: var(--gray2);
+      text-transform: uppercase;
+    }
+    .progress-row .pct { color: var(--pink); }
+    .progress-track {
+      height: 3px; background: var(--border);
+      border-radius: 2px; overflow: hidden; margin-bottom: 20px;
+    }
+    .progress-bar {
+      height: 100%; background: var(--pink);
+      border-radius: 2px; transition: width 0.5s ease;
+    }
+
+    /* ══════════════════════════════
+       QUESTION CARD
+    ══════════════════════════════ */
+    .q-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 28px;
+      animation: fade-up 0.35s ease;
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .q-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(233,30,140,0.12);
+      border: 1px solid rgba(233,30,140,0.3);
+      border-radius: 50px; padding: 4px 12px;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--pink); margin-bottom: 18px;
+    }
+    .q-text {
+      font-size: clamp(1rem, 2.4vw, 1.15rem);
+      font-weight: 600; line-height: 1.6;
+      color: var(--white); margin-bottom: 24px;
+    }
+
+    /* ─── Options ─── */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .opt {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 13px 16px;
+      cursor: pointer; transition: all 0.18s ease;
+      font-size: 0.95rem; color: var(--white); font-weight: 500;
+      text-align: left;
+    }
+    .opt:hover:not(:disabled) {
+      border-color: var(--pink);
+      background: rgba(233,30,140,0.06);
+    }
+    .opt:disabled { cursor: default; }
+    .opt-letter {
+      width: 30px; height: 30px; flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
+      color: var(--gray); transition: all 0.18s;
+      font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em;
+    }
+    /* States */
+    .opt.correct { background: var(--correct-bg); border-color: var(--correct); animation: pop 0.3s ease; }
+    .opt.correct .opt-letter { background: var(--correct); border-color: var(--correct); color: #fff; }
+    .opt.wrong   { background: var(--wrong-bg);   border-color: var(--wrong);   animation: shake 0.35s ease; }
+    .opt.wrong   .opt-letter { background: var(--wrong);   border-color: var(--wrong);   color: #fff; }
+    .opt.show-correct { background: var(--correct-bg); border-color: var(--correct); opacity: 0.6; }
+    .opt.show-correct .opt-letter { background: var(--correct); border-color: var(--correct); color: #fff; }
+    @keyframes pop {
+      0%  { transform: scale(1); }
+      40% { transform: scale(1.025); }
+      100%{ transform: scale(1); }
+    }
+    @keyframes shake {
+      0%,100%{ transform: translateX(0); }
+      20%    { transform: translateX(-5px); }
+      40%    { transform: translateX(5px); }
+      60%    { transform: translateX(-3px); }
+      80%    { transform: translateX(3px); }
+    }
+
+    /* ─── Feedback ─── */
+    .feedback {
+      margin-top: 18px; padding: 14px 16px;
+      border-radius: 8px; font-size: 0.875rem;
+      line-height: 1.6; display: none;
+    }
+    .feedback.show { display: block; animation: fade-up 0.3s ease; }
+    .feedback.fb-ok  { background: var(--correct-bg); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+    .feedback.fb-err { background: var(--wrong-bg);   border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
+
+    /* ─── Next button ─── */
+    .btn-next {
+      margin-top: 20px; width: 100%; padding: 14px;
+      background: var(--pink); border: none; border-radius: 6px;
+      color: var(--white);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.2s ease;
+      display: none;
+    }
+    .btn-next.show { display: block; animation: fade-up 0.25s ease; }
+    .btn-next:hover { background: var(--pink-dark); transform: translateY(-1px); }
+
+    /* ══════════════════════════════
+       RESULT SCREEN
+    ══════════════════════════════ */
+    .result-top {
+      text-align: center; padding: 36px 0 28px;
+    }
+    .score-ring {
+      position: relative;
+      width: 150px; height: 150px;
+      margin: 0 auto 24px;
+    }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring .ring-bg  { fill: none; stroke: var(--border); stroke-width: 8; }
+    .score-ring .ring-val {
+      fill: none; stroke: var(--pink); stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 408;
+      stroke-dashoffset: 408;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .score-ring .ring-glow {
+      fill: none; stroke: var(--pink); stroke-width: 16;
+      stroke-linecap: round;
+      stroke-dasharray: 408;
+      stroke-dashoffset: 408;
+      opacity: 0.15;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .score-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.2rem; line-height: 1;
+      color: var(--white);
+    }
+    .score-den { font-size: 0.78rem; color: var(--gray2); margin-top: 2px; }
+    .result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .result-title span { color: var(--pink); }
+    .result-hits {
+      font-size: 0.82rem; color: var(--gray2); margin-bottom: 20px;
+      letter-spacing: 0.06em;
+    }
+    .result-msg {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+      font-size: 0.9rem; line-height: 1.7;
+      color: var(--gray); margin-bottom: 28px; text-align: left;
+    }
+    /* Review */
+    .review-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem; letter-spacing: 0.1em;
+      color: var(--gray); margin-bottom: 14px;
+    }
+    .rev-item {
+      padding: 12px 14px; border-radius: 8px;
+      border: 1px solid transparent; margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    .rev-item.ok  { background: var(--correct-bg); border-color: rgba(34,197,94,0.2); }
+    .rev-item.err { background: var(--wrong-bg);   border-color: rgba(239,68,68,0.2); }
+    .rev-q { color: var(--gray2); margin-bottom: 4px; font-size: 0.8rem; }
+    .rev-a .tick   { color: var(--correct); font-weight: 700; }
+    .rev-a .cross  { color: var(--wrong);   font-weight: 700; }
+    .rev-a .label  { color: var(--gray); font-size: 0.78rem; }
+    .btn-restart {
+      display: block; width: 100%; margin-top: 28px;
+      padding: 14px;
+      background: transparent;
+      border: 2px solid var(--pink); border-radius: 6px;
+      color: var(--pink);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-restart:hover { background: var(--pink); color: var(--white); }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .q-card, .reg-card { padding: 22px 16px; }
+      .result-top { padding: 24px 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<!-- ═══════════════ WELCOME ═══════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="wrap">
+    <div class="welcome-header">
+      <img src="https://yt3.googleusercontent.com/rfAmBgsctyLqQupDTeug6y4BMMgmAUdpQdXc2Upcu0QGiFNooLowrepByuO2QLIIQsVEEavwi4U=s160-c-k-c0x00ffffff-no-rj" alt="Evangelho do Reino" />
+      <div class="channel-name">O EVANGELHO DO REINO<span class="bar"> | </span>EM UM MINUTO</div>
+      <div class="channel-sub">@evangelhodoreinoemumminuto</div>
+      <div class="pink-line"></div>
+    </div>
+
+    <p class="welcome-desc">
+      Teste seus conhecimentos bíblicos com as perguntas do canal.<br/>
+      Responda as questões e descubra sua nota ao final.
+    </p>
+
+    <div class="badge-row">
+      <div class="badge">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        35 questões
+      </div>
+      <div class="badge">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        Nota de 1 a 10
+      </div>
+      <div class="badge">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Bíblia Sagrada
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="showScreen('screen-subscribe')">PARTICIPAR DO QUIZ</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SUBSCRIBE ═══════════════ -->
+<div id="screen-subscribe" class="screen">
+  <div class="wrap">
+    <div class="site-header">
+      <img src="https://yt3.googleusercontent.com/rfAmBgsctyLqQupDTeug6y4BMMgmAUdpQdXc2Upcu0QGiFNooLowrepByuO2QLIIQsVEEavwi4U=s160-c-k-c0x00ffffff-no-rj" alt="Canal" />
+      <div class="brand">
+        <h1>EVANGELHO DO REINO <span>|</span> EM UM MINUTO</h1>
+        <p>Quiz Bíblico</p>
+      </div>
+    </div>
+
+    <div class="sub-card">
+      <h2>ANTES DE <span>COMEÇAR</span></h2>
+      <p class="sub-desc">
+        Para participar do quiz você precisa ser inscrito no canal e ativar as notificações.
+        Siga os dois passos abaixo e depois confirme para liberar o quiz.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Inscreva-se no canal</div>
+            <div class="step-detail">
+              Clique no botão vermelho <strong>Inscrever-se</strong> na página do canal.
+              <br/>
+              <a class="yt-btn" href="https://www.youtube.com/@evangelhodoreinoemumminuto?sub_confirmation=1" target="_blank">
+                ▶ Abrir canal no YouTube
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Ative o sininho com <em>Todas</em> as notificações</div>
+            <div class="step-detail">
+              Após se inscrever, clique no ícone 🔔 ao lado do botão e selecione
+              <strong>"Todas"</strong> para não perder nenhum vídeo ou quiz novo.
+              <br/>
+              <span class="bell-badge">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V4a1 1 0 10-2 0v1.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                🔔 → Todas as notificações
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification area -->
+      <div class="verify-area">
+        <div class="config-warn" id="config-warn">
+          ⚠️ <strong>Configuração necessária:</strong> insira seu <code>GOOGLE_CLIENT_ID</code> no início do script
+          para habilitar a verificação automática. Veja as instruções em <code>SETUP.md</code>.
+        </div>
+
+        <button class="btn-google" id="btn-google" onclick="signInAndVerify()">
+          <svg width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13 17.8 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/>
+            <path fill="#FBBC05" d="M10.5 28.7A14.6 14.6 0 019.5 24c0-1.6.3-3.2.7-4.7l-7.8-6A24 24 0 000 24c0 3.9.9 7.5 2.7 10.7l7.8-6z"/>
+            <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.6-5.9c-2 1.4-4.6 2.2-7.6 2.2-6.2 0-11.5-4.2-13.4-9.8l-7.8 6C6.6 42.6 14.6 48 24 48z"/>
+          </svg>
+          Verificar inscrição com Google
+        </button>
+
+        <!-- Dynamic status -->
+        <div class="status-card loading" id="status-loading">
+          <div class="spinner"></div>
+          <div class="status-title">VERIFICANDO...</div>
+          <div class="status-sub">Consultando sua inscrição no canal.</div>
+        </div>
+
+        <div class="status-card subscribed" id="status-subscribed">
+          <div class="status-icon">✅</div>
+          <div class="status-title">INSCRIÇÃO CONFIRMADA!</div>
+          <div class="status-sub" id="sub-user-name">Você é inscrito no canal.</div>
+        </div>
+
+        <div class="status-card not-subscribed" id="status-not-subscribed">
+          <div class="status-icon">🔔</div>
+          <div class="status-title">VOCÊ NÃO ESTÁ INSCRITO</div>
+          <div class="status-sub">
+            Inscreva-se no canal e ative <strong>Todas</strong> as notificações para participar.
+          </div>
+          <div style="margin-top:14px">
+            <a class="btn-subscribe-yt"
+               href="https://www.youtube.com/@evangelhodoreinoemumminuto?sub_confirmation=1"
+               target="_blank">
+              ▶ Inscrever-se agora
+            </a>
+            <button class="btn-retry" onclick="signInAndVerify()">Verificar novamente</button>
+          </div>
+        </div>
+
+        <div class="status-card error" id="status-error">
+          <div class="status-icon">⚠️</div>
+          <div class="status-title" id="err-title">ERRO NA VERIFICAÇÃO</div>
+          <div class="status-sub" id="err-sub">Tente novamente.</div>
+          <button class="btn-retry" style="margin-top:12px" onclick="signInAndVerify()">Tentar novamente</button>
+        </div>
+
+        <button class="btn-primary" id="btn-start-quiz" onclick="startQuiz()"
+                disabled style="margin-top:16px">
+          INICIAR O QUIZ →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ QUIZ ═══════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="wrap">
+    <div class="site-header">
+      <img src="https://yt3.googleusercontent.com/rfAmBgsctyLqQupDTeug6y4BMMgmAUdpQdXc2Upcu0QGiFNooLowrepByuO2QLIIQsVEEavwi4U=s160-c-k-c0x00ffffff-no-rj" alt="Canal" />
+      <div class="brand">
+        <h1>EVANGELHO DO REINO <span>|</span> EM UM MINUTO</h1>
+        <p>Quiz Bíblico</p>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <span id="q-counter">Questão 1 de 35</span>
+      <span class="pct" id="q-score">0 corretas</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div class="q-card" id="q-card">
+      <div class="q-tag" id="q-tag">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        Questão 1
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="q-options"></div>
+      <div class="feedback" id="q-feedback"></div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">PRÓXIMA →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ RESULT ═══════════════ -->
+<div id="screen-result" class="screen">
+  <div class="wrap">
+    <div class="site-header">
+      <img src="https://yt3.googleusercontent.com/rfAmBgsctyLqQupDTeug6y4BMMgmAUdpQdXc2Upcu0QGiFNooLowrepByuO2QLIIQsVEEavwi4U=s160-c-k-c0x00ffffff-no-rj" alt="Canal" />
+      <div class="brand">
+        <h1>EVANGELHO DO REINO <span>|</span> EM UM MINUTO</h1>
+        <p>Resultado do Quiz</p>
+      </div>
+    </div>
+
+    <div class="result-top">
+      <div class="score-ring">
+        <svg viewBox="0 0 150 150" width="150" height="150">
+          <circle class="ring-glow" cx="75" cy="75" r="65" id="ring-glow"/>
+          <circle class="ring-bg"   cx="75" cy="75" r="65"/>
+          <circle class="ring-val"  cx="75" cy="75" r="65" id="ring-val"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-num" id="score-num">0</div>
+          <div class="score-den">/ 10</div>
+        </div>
+      </div>
+
+      <div class="result-title" id="result-title">RESULTADO</div>
+      <div class="result-hits" id="result-hits"></div>
+
+      <div class="result-msg" id="result-msg"></div>
+    </div>
+
+    <div class="review-title">REVISÃO DAS RESPOSTAS</div>
+    <div id="review-list"></div>
+
+    <button class="btn-restart" onclick="restart()">↺ JOGAR NOVAMENTE</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   DATA
+══════════════════════════════════════ */
+const QUESTIONS = [
+  { q:"Qual era o nome dos três homens que foram jogados dentro de uma fornalha acesa?",
+    o:["Pedro, João e Felipe","Zorobabel, Esdras e Neemias","Saul, Davi e Salomão","Sadraque, Mesaque e Abednego"],
+    c:3, v:"Daniel 3 — Os três hebreus saíram ilesos da fornalha ardente de Nabucodonosor, pois DEUS estava com eles." },
+  { q:"Qual o profeta que ajudou na libertação da cidade de Nínive?",
+    o:["Abraão","Jonas","Moisés","Gideão"],
+    c:1, v:"Jonas 3 — Jonas pregou o arrependimento e toda Nínive se arrependeu, sendo liberta do juízo de DEUS." },
+  { q:"O que nós precisamos conhecer para sermos livres?",
+    o:["Alegria","Poder","Força","Verdade"],
+    c:3, v:'João 8:32 — "E conhecereis a verdade, e a verdade vos libertará."' },
+  { q:"O que diz DEUS sobre os retos de coração?",
+    o:["Serão santos","Serão justos","Serão pacíficos","Serão salvos"],
+    c:3, v:'Salmos 7:10 — "O meu escudo está em DEUS, que salva os retos de coração."' },
+  { q:"Em Gênesis DEUS criou o homem e a mulher — em que dia da criação os criou?",
+    o:["Primeiro dia","Terceiro dia","Segundo dia","Sexto dia"],
+    c:3, v:"Gênesis 1:27–31 — No sexto dia DEUS criou o homem à sua imagem e semelhança." },
+  { q:"Qual foi o sinal da aliança que DEUS fez com Noé, dizendo que a terra não seria mais destruída com águas?",
+    o:["Relâmpago","Chuva","Vento","Arco-íris"],
+    c:3, v:'Gênesis 9:13 — "Ponho o meu arco nas nuvens, e ele será por sinal de aliança entre mim e a terra."' },
+  { q:"Qual foi a maior demonstração de amor que DEUS nos deixou como exemplo?",
+    o:["Libertação do povo do Egito","Parar o Sol e a Lua para Josué","Abrir o mar vermelho","Dar seu filho para morrer por nós"],
+    c:3, v:'João 3:16 — "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito."' },
+  { q:"Sansão, o Nazireu do livro de Juízes — de onde vinha a sua força?",
+    o:["Dos músculos","Do seu cabelo","Da obediência a DEUS","Das promessas de sua mãe"],
+    c:1, v:"Juízes 16 — A força de Sansão estava ligada ao seu voto de nazireu, simbolizado pelo cabelo que nunca havia sido cortado." },
+  { q:"O que acontece quando a sabedoria entrar no teu coração e o conhecimento for agradável à tua alma?",
+    o:["O bom siso te guardará e a inteligência te conservará","Te afastará do mau caminho, e do homem que fala coisas perversas","Te afastará daqueles que escolhem servir ao mal","Todas as anteriores"],
+    c:3, v:"Provérbios 2:10–12 — A sabedoria guarda, conserva e afasta do mau caminho — todas estas bênçãos acontecem juntas." },
+  { q:"Qual é o princípio do conhecimento e da sabedoria?",
+    o:["Ter fé","Fazer orações","Jejuar","Temer a DEUS"],
+    c:3, v:'Provérbios 1:7 — "O temor do SENHOR é o princípio da sabedoria."' },
+  { q:"Dentro da fornalha, Sadraque, Mesaque e Abednego recebem a visita de um ser espiritual — quem é ele?",
+    o:["Jesus Cristo","Um anjo","Um profeta","Um sacerdote"],
+    c:0, v:'Daniel 3:25 — O rei viu um quarto ser "semelhante ao Filho de DEUS", identificado como aparição pré-encarnada de Jesus Cristo.' },
+  { q:"Quem é o sacerdote eterno pela ordem de Melquisedeque?",
+    o:["Abraão","Arão","Davi","Jesus Cristo"],
+    c:3, v:'Hebreus 6:20 — "Jesus, que se tornou sumo sacerdote para sempre, segundo a ordem de Melquisedeque."' },
+  { q:"Quando damos frutos do Espírito, trabalhamos para?",
+    o:["O maligno","Os homens","Jesus Cristo","Os anjos"],
+    c:2, v:"Gálatas 5:22–25 — Os frutos do Espírito são manifestação da vida de Cristo em nós, produzidos para a glória de Jesus." },
+  { q:"Quando nós trabalhamos para a carne, trabalhamos para?",
+    o:["O mundo","Os homens","Satanás","Os anjos"],
+    c:2, v:"Gálatas 5:19–21 — As obras da carne são contrárias ao Espírito e colocam o homem sob a influência do adversário." },
+  { q:"Na mesma ordem, quem eram Beltessazar, Sadraque, Mesaque e Abede-nego?",
+    o:["Daniel, Hananias, Misael e Azarias","Daniel, Zorobabel, Esdras e Neemias","Daniel, Isaías, Eli e Samuel","Daniel, Jeremias, Ezequiel e Ezequias"],
+    c:0, v:"Daniel 1:6–7 — O chefe dos eunucos impôs novos nomes babilônicos aos quatro jovens hebreus." },
+  { q:"Quando de fato DEUS criou o Senhor Jesus Cristo?",
+    o:["Depois dos anjos","Depois dos céus e da terra","Depois dos humanos","Antes de tudo"],
+    c:3, v:'Colossenses 1:15–17 — "Ele é antes de todas as coisas, e em Ele tudo subsiste."' },
+  { q:"Que Jesus Cristo irá voltar não é dúvida, mas quando de fato você acredita que ele volta?",
+    o:["Antes da tribulação","No meio da tribulação","Na revelação do filho da perdição","No fim da tribulação"],
+    c:3, v:'Mateus 24:29–31 — "Logo após a tribulação daqueles dias... verão o Filho do homem vindo sobre as nuvens do céu."' },
+  { q:"Quem sabe a data e hora precisamente da volta do Senhor Jesus Cristo?",
+    o:["Os homens","Os santos","Ninguém","O Pai"],
+    c:3, v:'Mateus 24:36 — "Mas acerca daquele dia e hora ninguém sabe, nem os anjos dos céus, nem o Filho, senão o Pai."' },
+  { q:"Quantos anos tinha Noé quando o dilúvio veio sobre a terra?",
+    o:["300","400","500","600"],
+    c:3, v:'Gênesis 7:6 — "Era Noé da idade de seiscentos anos quando o dilúvio de águas veio sobre a terra."' },
+  { q:"Qual era o nome dos filhos de Noé que entraram na arca?",
+    o:["Ezequias, Elias e Eliseu","Eli, Isaias e Samuel","Sem, Cam e Jafé","Caim, Abel e Sete"],
+    c:2, v:'Gênesis 7:13 — "Naquele mesmo dia entraram na arca Noé, Sem, Cam e Jafé, filhos de Noé."' },
+  { q:"Qual era o nome das doze tribos de Israel?",
+    o:["Carlos, Caio, Ciro, André, João, Filipe, Arthur, Guilherme, Clóvis, Cláudio, Adão e Tito",
+       "Rubén, Simeão, Levi, Judá, Issacar, Zebulom, Benjamim, Dã, Naftali, Gade, Aser e José",
+       "Pedro, André, Tiago, João, Filipe, Bartolomeu, Mateus, Tomé, Tiago, Zelote, Judas e Judas I.",
+       "Ninrode, Tito, Cezar, Clóvis, Cláudio, Nero, Acabe, Dário, Ciro, Tibério, Adriano e Trajano"],
+    c:1, v:"Gênesis 49 — As doze tribos descendem dos doze filhos de Jacó (Israel)." },
+  { q:"Quem eram os filhos de Adão?",
+    o:["Sem, Cam e Jafé","Ananias, Azarias e Misaias","Caim, Abel e Sete","Moisés, Elias e Eliseu"],
+    c:2, v:"Gênesis 4:1–2, 4:25 — Adão e Eva tiveram Caim, Abel e, depois da morte de Abel, Sete." },
+  { q:"Na mesma ordem, qual natureza vivifica o homem e qual para nada se aproveita?",
+    o:["O espírito e a carne","O espírito e a alma","A alma e a carne","O espírito e a alma"],
+    c:0, v:'João 6:63 — "O espírito é o que vivifica; a carne para nada aproveita."' },
+  { q:"Quem convence o homem do pecado, da justiça e do juízo?",
+    o:["Sua consciência","O mundo","O amigo","O Espírito Santo"],
+    c:3, v:'João 16:8 — "E, quando ele vier, convencerá o mundo do pecado, da justiça e do juízo."' },
+  { q:"Qual era a cidade que Jonas precisava avisar que seria destruída?",
+    o:["Tarsis","Damasco","Nínive","Jope"],
+    c:2, v:'Jonas 1:2 — "Levanta-te, vai à grande cidade de Nínive e prega contra ela."' },
+  { q:"Acerca dos dons espirituais distribuídos pelo Espírito Santo — quais são?",
+    o:["Palavra de sabedoria, ciência ou fé","Cura, operação de maravilhas, profecia","Discernir espíritos, variedades de línguas ou interpretação de línguas","Todas as anteriores"],
+    c:3, v:"1 Coríntios 12:8–10 — O Espírito Santo distribui todos estes dons conforme sua vontade." },
+  { q:"O que o homem precisa fazer para não entrar em tentação?",
+    o:["Jejuar e pregar","Pregar e ajudar","Ajudar e vigiar","Vigiar e orar"],
+    c:3, v:'Mateus 26:41 — "Vigiai e orai, para que não entreis em tentação; o espírito está pronto, mas a carne é fraca."' },
+  { q:"Qual o nome do monte onde o anjo de DEUS aparece numa sarça ardente para Moisés?",
+    o:["Monte Hebrom","Monte Horebe","Monte das Oliveiras","Monte Carmelo"],
+    c:1, v:"Êxodo 3:1–2 — Moisés chegou ao monte de DEUS, a Horebe, onde o anjo do SENHOR apareceu numa chama de fogo." },
+  { q:"Com quantos homens Gideão derrotou os midianitas?",
+    o:["40.000","3.000","300","500"],
+    c:2, v:'Juízes 7:7 — "Com estes trezentos homens que lamberam a água vos salvarei, e darei os midianitas na tua mão."' },
+  { q:"Quantas pessoas foram ressuscitadas por Jesus Cristo?",
+    o:["1","2","3","4"],
+    c:2, v:"Os três ressuscitados por Jesus: a filha de Jairo (Marcos 5), o filho da viúva de Naim (Lucas 7) e Lázaro (João 11)." },
+  { q:"Aproximadamente quantos homens foram alimentados por Jesus com 5 pães e 2 peixes?",
+    o:["1.500","2.500","7.000","5.000"],
+    c:3, v:'João 6:10 — "Então os homens se recostaram em número de quase cinco mil."' },
+  { q:"Quem é amigo do mundo e satisfaz as obras da carne, portanto?",
+    o:["É amigo de DEUS","É inimigo de DEUS","Não é amigo e nem inimigo","Nenhuma das anteriores"],
+    c:1, v:'Tiago 4:4 — "Qualquer que quiser ser amigo do mundo constitui-se inimigo de DEUS."' },
+  { q:"No final restarão a fé, a esperança e o amor — mas qual é o maior deles?",
+    o:["A fé","A esperança","O amor"],
+    c:2, v:'1 Coríntios 13:13 — "Agora, pois, permanecem a fé, a esperança e o amor; mas o maior destes é o amor."' },
+  { q:"Qual o papel fundamental de Jesus Cristo na terra?",
+    o:["Mostrar que a divindade pode ser humana","A salvação do homem","DEUS na terra","Ele veio pelos Santos"],
+    c:1, v:'Lucas 19:10 — "Porque o Filho do homem veio buscar e salvar o que se tinha perdido."' },
+  { q:"Qual foi o primeiro milagre de Jesus?",
+    o:["Cura do cego","Cura do paralítico","Transformar água em vinho","Cura do leproso"],
+    c:2, v:"João 2:1–11 — No casamento em Caná da Galileia, Jesus transformou água em vinho — primeiro de seus sinais." }
+];
+
+const L = ["A","B","C","D"];
+/* ══════════════════════════════════════
+   CONFIG  —  coloque aqui seu Client ID do Google Cloud Console
+   https://console.cloud.google.com/apis/credentials
+   (Tipo: Aplicativo da Web — adicione http://localhost:8080 como origem autorizada)
+══════════════════════════════════════ */
+const GOOGLE_CLIENT_ID = "996565231530-1841851jo02j9httf8loj57g4vg9a85o.apps.googleusercontent.com";
+const CHANNEL_ID       = "UCxmTpZsa7mN6TSFv0OSwgmA"; // Evangelho do Reino em um Minuto
+
+let cur = 0, hits = 0, answered = false, log = [];
+let tokenClient = null;
+
+/* ── helpers ── */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+function setStatus(name){
+  ["loading","subscribed","not-subscribed","error"].forEach(s =>
+    document.getElementById("status-"+s).classList.remove("show")
+  );
+  if(name) document.getElementById("status-"+name).classList.add("show");
+}
+
+/* ── OAuth + YouTube subscription check ── */
+function signInAndVerify(){
+  // Warn if client ID is not configured
+  if(GOOGLE_CLIENT_ID.startsWith("SEU_CLIENT_ID")){
+    document.getElementById("config-warn").classList.add("show");
+    return;
+  }
+  document.getElementById("config-warn").classList.remove("show");
+
+  setStatus("loading");
+  document.getElementById("btn-google").style.display = "none";
+  document.getElementById("btn-start-quiz").disabled = true;
+
+  if(!tokenClient){
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: "https://www.googleapis.com/auth/youtube.readonly",
+      callback: handleToken
+    });
+  }
+  tokenClient.requestAccessToken({ prompt: "select_account" });
+}
+
+async function handleToken(resp){
+  if(resp.error){
+    // User cancelled or error
+    document.getElementById("btn-google").style.display = "flex";
+    setStatus(null);
+    if(resp.error !== "access_denied"){
+      document.getElementById("err-title").textContent = "ERRO NA AUTENTICAÇÃO";
+      document.getElementById("err-sub").textContent = resp.error_description || resp.error;
+      setStatus("error");
+    }
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true` +
+      `&forChannelId=${CHANNEL_ID}&maxResults=1`,
+      { headers: { Authorization: `Bearer ${resp.access_token}` } }
+    );
+
+    if(!res.ok){
+      const err = await res.json();
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if(data.items && data.items.length > 0){
+      // ✅ Subscribed
+      const displayName = data.items[0].snippet?.subscriberSnippet?.title || "";
+      if(displayName){
+        document.getElementById("sub-user-name").textContent =
+          `Olá, ${displayName}! Você é inscrito no canal. Pode começar o quiz!`;
+      }
+      setStatus("subscribed");
+      document.getElementById("btn-start-quiz").disabled = false;
+    } else {
+      // ❌ Not subscribed
+      document.getElementById("btn-google").style.display = "flex";
+      setStatus("not-subscribed");
+    }
+
+  } catch(e){
+    document.getElementById("btn-google").style.display = "flex";
+    document.getElementById("err-title").textContent = "ERRO NA VERIFICAÇÃO";
+    document.getElementById("err-sub").textContent = e.message;
+    setStatus("error");
+  }
+}
+
+/* ── Start quiz (only when subscribed) ── */
+function startQuiz(){
+  if(document.getElementById("btn-start-quiz").disabled) return;
+  cur = 0; hits = 0; answered = false; log = [];
+  showScreen("screen-quiz");
+  renderQ();
+}
+
+/* ── Init: show config warning if no client ID ── */
+window.addEventListener("load", () => {
+  if(GOOGLE_CLIENT_ID.startsWith("SEU_CLIENT_ID")){
+    document.getElementById("config-warn").classList.add("show");
+  }
+});
+
+/* ── quiz ── */
+function renderQ(){
+  const d = QUESTIONS[cur];
+  answered = false;
+
+  document.getElementById("q-counter").textContent = `Questão ${cur+1} de ${QUESTIONS.length}`;
+  document.getElementById("q-score").textContent   = `${hits} corretas`;
+  document.getElementById("progress-bar").style.width = (cur / QUESTIONS.length * 100) + "%";
+
+  // animate card
+  const card = document.getElementById("q-card");
+  card.style.animation = "none"; void card.offsetWidth; card.style.animation = "fade-up 0.35s ease";
+
+  document.getElementById("q-tag").innerHTML = `
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    Questão ${cur+1}`;
+  document.getElementById("q-text").textContent = d.q;
+
+  const wrap = document.getElementById("q-options");
+  wrap.innerHTML = "";
+  d.o.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.innerHTML = `<span class="opt-letter">${L[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => pick(i);
+    wrap.appendChild(btn);
+  });
+
+  const fb = document.getElementById("q-feedback");
+  fb.className = "feedback"; fb.innerHTML = "";
+
+  const nb = document.getElementById("btn-next");
+  nb.className = "btn-next";
+  nb.textContent = cur === QUESTIONS.length - 1 ? "VER RESULTADO ›" : "PRÓXIMA →";
+}
+
+function pick(idx){
+  if(answered) return;
+  answered = true;
+  const d = QUESTIONS[cur];
+  const ok = idx === d.c;
+  if(ok) hits++;
+  log.push({ chosen: idx, correct: d.c });
+
+  document.querySelectorAll(".opt").forEach((btn, i) => {
+    btn.disabled = true;
+    if(i === d.c && i !== idx) btn.classList.add("show-correct");
+  });
+  document.querySelectorAll(".opt")[idx].classList.add(ok ? "correct" : "wrong");
+
+  const fb = document.getElementById("q-feedback");
+  fb.className = "feedback show " + (ok ? "fb-ok" : "fb-err");
+  fb.innerHTML = ok
+    ? `<strong>✔ Correto!</strong> ${d.v}`
+    : `<strong>✘ Incorreto.</strong> A resposta certa é: <strong>${d.o[d.c]}</strong>. ${d.v}`;
+
+  document.getElementById("btn-next").classList.add("show");
+}
+
+function nextQuestion(){
+  cur++;
+  if(cur < QUESTIONS.length) renderQ();
+  else showResult();
+}
+
+/* ── result ── */
+function showResult(){
+  showScreen("screen-result");
+  const score = Math.max(1, Math.round((hits / QUESTIONS.length) * 10));
+
+  // animate counter
+  let n = 0;
+  const el = document.getElementById("score-num");
+  const t = setInterval(() => { el.textContent = ++n; if(n >= score) clearInterval(t); }, 120);
+
+  // animate ring  (circumference = 2π × 65 ≈ 408.4)
+  const circ = 408;
+  const offset = circ - (score / 10) * circ;
+  setTimeout(() => {
+    document.getElementById("ring-val").style.strokeDashoffset  = offset;
+    document.getElementById("ring-glow").style.strokeDashoffset = offset;
+  }, 200);
+
+  // title & msg
+  let title, msg;
+  if(score <= 3){
+    title = "CONTINUE <span>BUSCANDO</span>";
+    msg   = "Não desanime! A Palavra de DEUS está sempre disponível. Leia e medite nas Escrituras diariamente — o crescimento vem passo a passo.";
+  } else if(score <= 5){
+    title = "BOM <span>COMEÇO!</span>";
+    msg   = "Você demonstrou conhecimento da Palavra. Continue se aprofundando nas Escrituras e cada vez mais você será transformado por elas.";
+  } else if(score <= 7){
+    title = "ÓTIMO <span>CONHECIMENTO!</span>";
+    msg   = "Excelente! Seu conhecimento bíblico é notável. Que DEUS continue iluminando seu entendimento e que a Palavra transforme cada área da sua vida.";
+  } else if(score <= 9){
+    title = "PARABÉNS! <span>MUITO BOM!</span>";
+    msg   = '"A tua palavra está guardada no meu coração, para eu não pecar contra ti." (Salmos 119:11) — Você demonstrou um sólido conhecimento bíblico!';
+  } else {
+    title = "PERFEITO! <span>10/10!</span>";
+    msg   = "Extraordinário! Você acertou tudo! Que este conhecimento seja sempre a serviço do Reino de DEUS e da edificação do próximo.";
+  }
+
+  document.getElementById("result-title").innerHTML = title;
+  document.getElementById("result-hits").textContent = `${hits} de ${QUESTIONS.length} questões corretas`;
+  document.getElementById("result-msg").textContent  = msg;
+  document.getElementById("user-info-text").innerHTML =
+    `<strong>${user.nome}</strong> &nbsp;·&nbsp; ${user.email} &nbsp;·&nbsp; ${user.cidade}`;
+
+  // review
+  const rev = document.getElementById("review-list");
+  rev.innerHTML = "";
+  log.forEach((entry, i) => {
+    const q   = QUESTIONS[i];
+    const ok  = entry.chosen === entry.correct;
+    const div = document.createElement("div");
+    div.className = "rev-item " + (ok ? "ok" : "err");
+    div.innerHTML = `
+      <div class="rev-q">${i+1}. ${q.q}</div>
+      <div class="rev-a">
+        ${ok
+          ? `<span class="tick">✔</span> ${q.o[entry.correct]}`
+          : `<span class="cross">✘</span> <span class="label">Sua resposta:</span> ${q.o[entry.chosen]}<br/>
+             <span class="tick">✔</span> <span class="label">Correto:</span> ${q.o[entry.correct]}`
+        }
+      </div>`;
+    rev.appendChild(div);
+  });
+}
+
+function restart(){
+  showScreen("screen-welcome");
+}
+</script>
+</body>
+</html>
